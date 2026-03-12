@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Al Hikma University - Home</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }
+
+    /* NAV */
+    nav {
+      background: #1a3a5c;
+      padding: 15px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo img { width: 50px; height: 50px; border-radius: 50%; }
+    .logo-text h1 { color: #c9a84c; font-size: 1.3rem; font-weight: 700; }
+    .logo-text p { color: #aab8c8; font-size: 0.75rem; }
+    nav ul { list-style: none; display: flex; gap: 25px; }
+    nav ul li a { color: #dde6f0; text-decoration: none; font-size: 0.95rem; transition: color 0.3s; }
+    nav ul li a:hover { color: #c9a84c; }
+    .nav-login-btn {
+      background: #c9a84c;
+      color: #1a3a5c !important;
+      padding: 8px 18px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+    .nav-login-btn:hover { background: #e0bc5a; color: #1a3a5c !important; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, #1a3a5c 0%, #0d2137 50%, #1a3a5c 100%);
+      color: white;
+      text-align: center;
+      padding: 100px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 60%);
+    }
+    .hero h1 { font-size: 3rem; margin-bottom: 15px; color: #c9a84c; position: relative; }
+    .hero h2 { font-size: 1.5rem; margin-bottom: 20px; color: #dde6f0; font-weight: 300; position: relative; }
+    .hero p { font-size: 1.1rem; color: #aab8c8; max-width: 600px; margin: 0 auto 35px; position: relative; }
+    .hero-btns { display: flex; gap: 15px; justify-content: center; position: relative; }
+    .btn-primary {
+      background: #c9a84c;
+      color: #1a3a5c;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+    .btn-primary:hover { background: #e0bc5a; transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent;
+      color: #c9a84c;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      border: 2px solid #c9a84c;
+      transition: all 0.3s;
+    }
+    .btn-secondary:hover { background: #c9a84c; color: #1a3a5c; }
+
+    /* STATS */
+    .stats {
+      background: #f8f5ef;
+      padding: 50px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-item h3 { font-size: 2.5rem; color: #c9a84c; font-weight: 700; }
+    .stat-item p { color: #555; font-size: 0.95rem; margin-top: 5px; }
+
+    /* FEATURES */
+    .features {
+      padding: 70px 40px;
+      background: white;
+      text-align: center;
+    }
+    .section-title { font-size: 2rem; color: #1a3a5c; margin-bottom: 10px; }
+    .section-subtitle { color: #777; margin-bottom: 50px; }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: #f8f5ef;
+      padding: 35px 25px;
+      border-radius: 10px;
+      border-top: 4px solid #c9a84c;
+      transition: transform 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-5px); }
+    .feature-icon { font-size: 2.5rem; margin-bottom: 15px; }
+    .feature-card h3 { color: #1a3a5c; margin-bottom: 10px; }
+    .feature-card p { color: #666; font-size: 0.9rem; line-height: 1.6; }
+
+    /* FACULTIES */
+    .faculties {
+      padding: 70px 40px;
+      background: #1a3a5c;
+      text-align: center;
+    }
+    .faculties .section-title { color: #c9a84c; }
+    .faculties .section-subtitle { color: #aab8c8; }
+    .faculties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .faculty-card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(201,168,76,0.3);
+      padding: 30px 20px;
+      border-radius: 10px;
+      color: white;
+      transition: all 0.3s;
+    }
+    .faculty-card:hover { background: rgba(201,168,76,0.15); border-color: #c9a84c; }
+    .faculty-card .icon { font-size: 2rem; margin-bottom: 12px; }
+    .faculty-card h3 { font-size: 1rem; color: #dde6f0; }
+
+    /* FOOTER */
+    footer {
+      background: #0d2137;
+      color: #aab8c8;
+      text-align: center;
+      padding: 30px;
+      font-size: 0.9rem;
+    }
+    footer span { color: #c9a84c; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-text">
+      <h1>🎓 Al Hikma University</h1>
+      <p>جامعة الحكمة</p>
+    </div>
+  </div>
+  <ul>
+    <li><a href="index.html">Home</a></li>
+    <li><a href="#faculties">Faculties</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="login.html" class="nav-login-btn">Student Login</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <h1>Al Hikma University</h1>
+  <h2>جامعة الحكمة</h2>
+  <p>Empowering minds, building futures. A leading institution of higher education committed to academic excellence and Islamic values.</p>
+  <div class="hero-btns">
+    <a href="login.html" class="btn-primary">Student Portal</a>
+    <a href="#faculties" class="btn-secondary">Our Faculties</a>
+  </div>
+</section>
+
+<section class="stats">
+  <div class="stat-item"><h3>5,000+</h3><p>Students Enrolled</p></div>
+  <div class="stat-item"><h3>200+</h3><p>Academic Staff</p></div>
+  <div class="stat-item"><h3>8</h3><p>Faculties</p></div>
+  <div class="stat-item"><h3>25+</h3><p>Years of Excellence</p></div>
+</section>
+
+<section class="features" id="about">
+  <h2 class="section-title">Why Al Hikma University?</h2>
+  <p class="section-subtitle">Discover what makes us a leading institution</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📚</div>
+      <h3>Academic Excellence</h3>
+      <p>Rigorous academic programs designed to challenge and inspire students to reach their full potential.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🕌</div>
+      <h3>Islamic Values</h3>
+      <p>Education grounded in Islamic principles, fostering moral character alongside intellectual development.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌍</div>
+      <h3>Global Perspective</h3>
+      <p>International partnerships and exchange programs that prepare students for a global future.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💻</div>
+      <h3>Modern Facilities</h3>
+      <p>State-of-the-art labs, libraries, and learning spaces equipped with the latest technology.</p>
+    </div>
+  </div>
+</section>
+
+<section class="faculties" id="faculties">
+  <h2 class="section-title">Our Faculties</h2>
+  <p class="section-subtitle">Diverse programs across multiple disciplines</p>
+  <div class="faculties-grid">
+    <div class="faculty-card"><div class="icon">⚖️</div><h3>Faculty of Law</h3></div>
+    <div class="faculty-card"><div class="icon">🕌</div><h3>Faculty of Sharia</h3></div>
+    <div class="faculty-card"><div class="icon">📖</div><h3>Faculty of Education</h3></div>
+    <div class="faculty-card"><div class="icon">💼</div><h3>Faculty of Business</h3></div>
+    <div class="faculty-card"><div class="icon">🏥</div><h3>Faculty of Medicine</h3></div>
+    <div class="faculty-card"><div class="icon">💻</div><h3>Faculty of Computing</h3></div>
+    <div class="faculty-card"><div class="icon">🔬</div><h3>Faculty of Sciences</h3></div>
+    <div class="faculty-card"><div class="icon">🏗️</div><h3>Faculty of Engineering</h3></div>
+  </div>
+</section>
+
+<footer id="contact">
+  <p>© 2025 <span>Al Hikma University</span> — جامعة الحكمة. All rights reserved.</p>
+  <p style="margin-top:8px;">Excellence in Education | Islamic Values | Global Vision</p>
+</footer>
+
+</body>
+</html>
