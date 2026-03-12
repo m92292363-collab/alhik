@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Access</title>
+    <!-- No university branding - keep it subtle -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --border: #2a2d3a;
+            --accent: #62B6CB;
+            --green: #52B788;
+            --text: #e0e4ef;
+            --muted: #6b7280;
+            --error: #ef4444;
+            --warning: #f0a500;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(98,182,203,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(98,182,203,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* ── Login Panel ── */
+        #loginPanel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .panel-header {
+            margin-bottom: 2rem;
+        }
+
+        .panel-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .panel-sub {
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group { margin-bottom: 1.2rem; }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus { border-color: var(--accent); }
+
+        .btn-access {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--accent);
+            color: #0f1117;
+            border: none;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .btn-access:hover { opacity: 0.9; }
+        .btn-access:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .error-box {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: var(--error);
+            padding: 0.7rem 1rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        /* ── Dashboard ── */
+        #dashboard {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        .dash-nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .dash-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .dash-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .role-admin { background: rgba(98,182,203,0.15); color: var(--accent); border: 1px solid rgba(98,182,203,0.3); }
+        .role-staff { background: rgba(82,183,136,0.15); color: var(--green); border: 1px solid rgba(82,183,136,0.3); }
+
+        .btn-logout {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--error);
+            padding: 0.4rem 0.9rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover { background: rgba(239,68,68,0.2); }
+
+        .dash-body {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        /* Scope notice for staff */
+        .scope-notice {
+            background: rgba(240,165,0,0.08);
+            border: 1px solid rgba(240,165,0,0.25);
+            color: var(--warning);
+            padding: 0.7rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.83rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        /* Stats */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--muted);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards / Tables */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--text);
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .grade-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .grade-a { background: rgba(82,183,136,0.15); color: var(--green); }
+        .grade-b { background: rgba(98,182,203,0.15); color: var(--accent); }
+        .grade-c { background: rgba(240,165,0,0.15); color: var(--warning); }
+        .grade-d, .grade-f { background: rgba(239,68,68,0.15); color: var(--error); }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-group-dash { margin-bottom: 0; }
+
+        .form-group-dash label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-group-dash input,
+        .form-group-dash select {
+            width: 100%;
+            padding: 0.65rem 0.9rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group-dash select option { background: var(--bg); }
+        .form-group-dash input:focus,
+        .form-group-dash select:focus { border-color: var(--accent); }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-sm:hover { opacity: 0.85; }
+        .btn-green { background: var(--green); color: #0f1117; font-weight: 600; }
+        .btn-red { background: rgba(239,68,68,0.15); color: var(--error); border: 1px solid rgba(239,68,68,0.3); }
+        .btn-blue { background: rgba(98,182,203,0.15); color: var(--accent); border: 1px solid rgba(98,182,203,0.3); }
+
+        .success-msg {
+            background: rgba(82,183,136,0.1);
+            border: 1px solid rgba(82,183,136,0.3);
+            color: var(--green);
+            padding: 0.6rem 1rem;
+            border-radius: 7px;
+            font-size: 0.83rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .dash-body { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOGIN PANEL ── -->
+<div id="loginPanel">
+    <div class="panel-header">
+        <div class="panel-tag">// secure access</div>
+        <div class="panel-title">Management Portal</div>
+        <div class="panel-sub">Al Hikma University — Authorized Personnel Only</div>
+    </div>
+
+    <div class="error-box" id="loginError"></div>
+
+    <div class="form-group">
+        <label>Staff / Admin ID</label>
+        <input type="text" id="loginId" placeholder="your.id@alhikma.edu" autocomplete="username">
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-access" id="loginBtn" onclick="doLogin()">Access System</button>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+    <nav class="dash-nav">
+        <div class="dash-brand">AHU // Management System</div>
+        <div class="dash-user">
+            <span id="navUserName"></span>
+            <span class="role-badge" id="navRoleBadge"></span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="dash-body">
+        <!-- Staff scope notice -->
+        <div class="scope-notice" id="scopeNotice"></div>
+
+        <!-- Stats -->
+        <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+                <div class="stat-label">Students</div>
+                <div class="stat-value" id="statStudents">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Results</div>
+                <div class="stat-value" id="statResults">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Score</div>
+                <div class="stat-value" id="statAvg">—</div>
+            </div>
+            <div class="stat-card" id="staffCardWrap">
+                <div class="stat-label">Staff</div>
+                <div class="stat-value" id="statStaff">—</div>
+            </div>
+        </div>
+
+        <!-- Tabs — admin sees all 3, staff sees only Results -->
+        <div class="tabs" id="tabsBar">
+            <button class="tab-btn active" onclick="switchTab('results', this)">Results</button>
+            <button class="tab-btn admin-only" onclick="switchTab('students', this)">Students</button>
+            <button class="tab-btn admin-only" onclick="switchTab('staff', this)">Staff</button>
+        </div>
+
+        <!-- Results Tab -->
+        <div class="tab-content active" id="tab-results">
+            <div class="card">
+                <div class="card-title">
+                    Add Result
+                    <span style="font-size:0.75rem;color:var(--muted);font-weight:400" id="resultsScope"></span>
+                </div>
+                <div class="success-msg" id="resultSuccess"></div>
+                <div class="form-grid" style="margin-bottom:1rem">
+                    <div class="form-group-dash">
+                        <label>Student ID</label>
+                        <input type="text" id="rStudentId" placeholder="AHU-2024-001">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Subject</label>
+                        <input type="text" id="rSubject" placeholder="Islamic Studies">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Score (0–100)</label>
+                        <input type="number" id="rScore" placeholder="85" min="0" max="100">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Grade</label>
+                        <select id="rGrade">
+                            <option value="">— Select —</option>
+                            <option>A</option><option>B+</option><option>B</option>
+                            <option>C+</option><option>C</option><option>D</option><option>F</option>
+                        </select>
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Semester</label>
+                        <select id="rSemester">
+                            <option value="">— Select —</option>
+                            <option>Semester 1</option><option>Semester 2</option><option>Summer</option>
+                        </select>
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Academic Year</label>
+                        <input type="text" id="rYear" placeholder="2024/2025">
+                    </div>
+                </div>
+                <button class="btn-sm btn-green" onclick="addResult()">Add Result</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    All Results
+                    <input type="text" id="filterStudentId" placeholder="Filter by Student ID"
+                        style="padding:0.4rem 0.8rem;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.8rem;outline:none;width:200px"
+                        oninput="loadResults()">
+                </div>
+                <div id="resultsTableWrap"><div class="empty-state">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- Students Tab (admin only) -->
+        <div class="tab-content" id="tab-students">
+            <div class="card">
+                <div class="card-title">Add Student</div>
+                <div class="success-msg" id="studentSuccess"></div>
+                <div class="form-grid" style="margin-bottom:1rem">
+                    <div class="form-group-dash">
+                        <label>Student ID</label>
+                        <input type="text" id="sId" placeholder="AHU-2024-001">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Full Name</label>
+                        <input type="text" id="sName" placeholder="Ahmed Ibrahim">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Email</label>
+                        <input type="email" id="sEmail" placeholder="ahmed@example.com">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Password</label>
+                        <input type="password" id="sPassword" placeholder="Temp password">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Faculty</label>
+                        <select id="sFaculty">
+                            <option value="">— Select —</option>
+                            <option>Faculty of Education</option>
+                            <option>Faculty of Arts and Humanity</option>
+                            <option>Faculty of Quran and Islamic Studies</option>
+                            <option>Faculty of Shariaa and Law</option>
+                        </select>
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Department</label>
+                        <input type="text" id="sDept" placeholder="Department name">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Year</label>
+                        <select id="sYear">
+                            <option value="">— Select —</option>
+                            <option>Year 1</option><option>Year 2</option>
+                            <option>Year 3</option><option>Year 4</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-sm btn-green" onclick="addStudent()">Add Student</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">All Students</div>
+                <div id="studentsTableWrap"><div class="empty-state">Loading...</div></div>
+            </div>
+        </div>
+
+        <!-- Staff Tab (admin only) -->
+        <div class="tab-content" id="tab-staff">
+            <div class="card">
+                <div class="card-title">Add Staff Member</div>
+                <div class="success-msg" id="staffSuccess"></div>
+                <div class="form-grid" style="margin-bottom:1rem">
+                    <div class="form-group-dash">
+                        <label>Staff ID / Email</label>
+                        <input type="text" id="stId" placeholder="staff@alhikma.edu">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Full Name</label>
+                        <input type="text" id="stName" placeholder="Dr. Fatima">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Email</label>
+                        <input type="email" id="stEmail" placeholder="fatima@alhikma.edu">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Password</label>
+                        <input type="password" id="stPassword" placeholder="Temp password">
+                    </div>
+                    <div class="form-group-dash">
+                        <label>Faculty (they can ONLY manage this faculty)</label>
+                        <select id="stFaculty">
+                            <option value="">— Select —</option>
+                            <option>Faculty of Education</option>
+                            <option>Faculty of Arts and Humanity</option>
+                            <option>Faculty of Quran and Islamic Studies</option>
+                            <option>Faculty of Shariaa and Law</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-sm btn-green" onclick="addStaff()">Add Staff Member</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">All Staff</div>
+                <div id="staffTableWrap"><div class="empty-state">Loading...</div></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let TOKEN = null;
+    let CURRENT_USER = null;
+
+    // ── Enter key on login ──
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && document.getElementById('loginPanel').style.display !== 'none') {
+            doLogin();
+        }
+    });
+
+    // ── Check existing session ──
+    window.onload = () => {
+        const token = localStorage.getItem('ahu_mgmt_token');
+        const user = localStorage.getItem('ahu_mgmt_user');
+        if (token && user) {
+            TOKEN = token;
+            CURRENT_USER = JSON.parse(user);
+            showDashboard();
+        }
+    };
+
+    async function doLogin() {
+        const loginId = document.getElementById('loginId').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errorEl = document.getElementById('loginError');
+        const btn = document.getElementById('loginBtn');
+
+        errorEl.style.display = 'none';
+        if (!loginId || !password) {
+            showLoginError('Please enter your ID and password.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+
+        try {
+            const res = await fetch('/.netlify/functions/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ loginId, password, portal: 'management' })
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.token) {
+                TOKEN = data.token;
+                CURRENT_USER = data.user;
+                localStorage.setItem('ahu_mgmt_token', TOKEN);
+                localStorage.setItem('ahu_mgmt_user', JSON.stringify(CURRENT_USER));
+                showDashboard();
+            } else {
+                showLoginError(data.message || 'Invalid credentials.');
+            }
+        } catch {
+            showLoginError('Connection error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Access System';
+        }
+    }
+
+    function showLoginError(msg) {
+        const el = document.getElementById('loginError');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function showDashboard() {
+        document.getElementById('loginPanel').style.display = 'none';
+        const dash = document.getElementById('dashboard');
+        dash.style.display = 'flex';
+
+        const isAdmin = CURRENT_USER.role === 'admin';
+
+        // Nav info
+        document.getElementById('navUserName').textContent = CURRENT_USER.name;
+        const badge = document.getElementById('navRoleBadge');
+        badge.textContent = isAdmin ? 'ADMIN' : 'STAFF';
+        badge.className = 'role-badge ' + (isAdmin ? 'role-admin' : 'role-staff');
+
+        // Show/hide admin-only tabs and cards
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = isAdmin ? 'inline-block' : 'none';
+        });
+
+        // Staff scope notice
+        if (!isAdmin) {
+            const notice = document.getElementById('scopeNotice');
+            notice.textContent = `⚠ Your access is limited to: ${CURRENT_USER.faculty}. You can only add and edit results for students in this faculty.`;
+            notice.style.display = 'block';
+
+            document.getElementById('resultsScope').textContent = CURRENT_USER.faculty;
+            document.getElementById('staffCardWrap').style.display = 'none';
+        }
+
+        loadStats();
+        loadResults();
+        if (isAdmin) {
+            loadStudents();
+            loadStaffList();
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('ahu_mgmt_token');
+        localStorage.removeItem('ahu_mgmt_user');
+        TOKEN = null;
+        CURRENT_USER = null;
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('loginPanel').style.display = 'block';
+        document.getElementById('loginId').value = '';
+        document.getElementById('loginPassword').value = '';
+    }
+
+    function switchTab(name, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    // ── API helper ──
+    async function api(path, method = 'GET', body = null) {
+        const opts = {
+            method,
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` }
+        };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch('/.netlify/functions/' + path, opts);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Error');
+        return data;
+    }
+
+    // ── Stats ──
+    async function loadStats() {
+        try {
+            const data = await api('admin-stats');
+            document.getElementById('statStudents').textContent = data.stats.totalStudents;
+            document.getElementById('statResults').textContent = data.stats.totalResults;
+            document.getElementById('statAvg').textContent = data.stats.avgScore || '—';
+            if (data.stats.totalStaff !== undefined) {
+                document.getElementById('statStaff').textContent = data.stats.totalStaff;
+            }
+        } catch {}
+    }
+
+    // ── Results ──
+    async function loadResults() {
+        const filterVal = document.getElementById('filterStudentId')?.value.trim();
+        const wrap = document.getElementById('resultsTableWrap');
+        wrap.innerHTML = '<div class="empty-state">Loading...</div>';
+        try {
+            const url = filterVal ? `admin-results?studentId=${encodeURIComponent(filterVal)}` : 'admin-results';
+            const data = await api(url);
+            if (!data.results.length) {
+                wrap.innerHTML = '<div class="empty-state">No results found.</div>';
+                return;
+            }
+            wrap.innerHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Student ID</th><th>Name</th><th>Faculty</th>
+                        <th>Subject</th><th>Score</th><th>Grade</th>
+                        <th>Semester</th><th>Year</th><th>Action</th>
+                    </tr></thead>
+                    <tbody>
+                        ${data.results.map(r => `
+                            <tr>
+                                <td><code style="font-size:0.8rem;color:var(--accent)">${r.student_id}</code></td>
+                                <td>${r.student_name}</td>
+                                <td style="font-size:0.8rem;color:var(--muted)">${r.faculty || '—'}</td>
+                                <td>${r.subject}</td>
+                                <td>${r.score ?? '—'}</td>
+                                <td><span class="grade-badge ${gradeClass(r.grade)}">${r.grade || '—'}</span></td>
+                                <td>${r.semester || '—'}</td>
+                                <td>${r.academic_year || '—'}</td>
+                                <td><button class="btn-sm btn-red" onclick="deleteResult(${r.id})">Delete</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        } catch (e) {
+            wrap.innerHTML = `<div class="empty-state" style="color:var(--error)">${e.message}</div>`;
+        }
+    }
+
+    async function addResult() {
+        const btn = event.target;
+        const successEl = document.getElementById('resultSuccess');
+        successEl.style.display = 'none';
+        btn.disabled = true;
+        try {
+            await api('admin-results', 'POST', {
+                studentId: document.getElementById('rStudentId').value.trim(),
+                subject: document.getElementById('rSubject').value.trim(),
+                score: document.getElementById('rScore').value || null,
+                grade: document.getElementById('rGrade').value || null,
+                semester: document.getElementById('rSemester').value || null,
+                academicYear: document.getElementById('rYear').value.trim() || null,
+            });
+            successEl.textContent = 'Result added successfully!';
+            successEl.style.display = 'block';
+            ['rStudentId','rSubject','rScore','rYear'].forEach(id => document.getElementById(id).value = '');
+            ['rGrade','rSemester'].forEach(id => document.getElementById(id).selectedIndex = 0);
+            loadResults();
+            loadStats();
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteResult(id) {
+        if (!confirm('Delete this result?')) return;
+        try {
+            await api('admin-results', 'DELETE', { id });
+            loadResults();
+            loadStats();
+        } catch (e) { alert(e.message); }
+    }
+
+    // ── Students (admin only) ──
+    async function loadStudents() {
+        const wrap = document.getElementById('studentsTableWrap');
+        wrap.innerHTML = '<div class="empty-state">Loading...</div>';
+        try {
+            const data = await api('admin-students');
+            if (!data.students.length) {
+                wrap.innerHTML = '<div class="empty-state">No students yet.</div>';
+                return;
+            }
+            wrap.innerHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Student ID</th><th>Name</th><th>Email</th>
+                        <th>Faculty</th><th>Year</th><th>Joined</th><th>Action</th>
+                    </tr></thead>
+                    <tbody>
+                        ${data.students.map(s => `
+                            <tr>
+                                <td><code style="font-size:0.8rem;color:var(--accent)">${s.student_id}</code></td>
+                                <td>${s.name}</td>
+                                <td style="font-size:0.8rem">${s.email}</td>
+                                <td style="font-size:0.8rem;color:var(--muted)">${s.faculty || '—'}</td>
+                                <td>${s.year || '—'}</td>
+                                <td style="font-size:0.78rem;color:var(--muted)">${new Date(s.created_at).toLocaleDateString()}</td>
+                                <td><button class="btn-sm btn-red" onclick="deleteStudent('${s.student_id}')">Delete</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        } catch (e) {
+            wrap.innerHTML = `<div class="empty-state" style="color:var(--error)">${e.message}</div>`;
+        }
+    }
+
+    async function addStudent() {
+        const btn = event.target;
+        const successEl = document.getElementById('studentSuccess');
+        successEl.style.display = 'none';
+        btn.disabled = true;
+        try {
+            await api('admin-students', 'POST', {
+                studentId: document.getElementById('sId').value.trim(),
+                name: document.getElementById('sName').value.trim(),
+                email: document.getElementById('sEmail').value.trim(),
+                password: document.getElementById('sPassword').value,
+                faculty: document.getElementById('sFaculty').value || null,
+                department: document.getElementById('sDept').value.trim() || null,
+                year: document.getElementById('sYear').value || null,
+            });
+            successEl.textContent = 'Student added successfully!';
+            successEl.style.display = 'block';
+            ['sId','sName','sEmail','sPassword','sDept'].forEach(id => document.getElementById(id).value = '');
+            ['sFaculty','sYear'].forEach(id => document.getElementById(id).selectedIndex = 0);
+            loadStudents();
+            loadStats();
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteStudent(studentId) {
+        if (!confirm(`Delete student ${studentId}? This will also delete all their results.`)) return;
+        try {
+            await api('admin-students', 'DELETE', { studentId });
+            loadStudents();
+            loadStats();
+        } catch (e) { alert(e.message); }
+    }
+
+    // ── Staff management (admin only) ──
+    async function loadStaffList() {
+        const wrap = document.getElementById('staffTableWrap');
+        wrap.innerHTML = '<div class="empty-state">Loading...</div>';
+        try {
+            const data = await api('admin-staff');
+            if (!data.staff.length) {
+                wrap.innerHTML = '<div class="empty-state">No staff members yet.</div>';
+                return;
+            }
+            wrap.innerHTML = `
+                <table>
+                    <thead><tr>
+                        <th>Staff ID</th><th>Name</th><th>Email</th><th>Faculty Scope</th><th>Added</th><th>Action</th>
+                    </tr></thead>
+                    <tbody>
+                        ${data.staff.map(s => `
+                            <tr>
+                                <td><code style="font-size:0.8rem;color:var(--green)">${s.staff_id}</code></td>
+                                <td>${s.name}</td>
+                                <td style="font-size:0.8rem">${s.email}</td>
+                                <td style="font-size:0.8rem;color:var(--muted)">${s.faculty || 'All (Admin)'}</td>
+                                <td style="font-size:0.78rem;color:var(--muted)">${new Date(s.created_at).toLocaleDateString()}</td>
+                                <td><button class="btn-sm btn-red" onclick="deleteStaff('${s.staff_id}')">Remove</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        } catch {}
+    }
+
+    async function addStaff() {
+        const btn = event.target;
+        const successEl = document.getElementById('staffSuccess');
+        successEl.style.display = 'none';
+        btn.disabled = true;
+        try {
+            await api('admin-staff', 'POST', {
+                staffId: document.getElementById('stId').value.trim(),
+                name: document.getElementById('stName').value.trim(),
+                email: document.getElementById('stEmail').value.trim(),
+                password: document.getElementById('stPassword').value,
+                faculty: document.getElementById('stFaculty').value || null,
+            });
+            successEl.textContent = 'Staff member added!';
+            successEl.style.display = 'block';
+            ['stId','stName','stEmail','stPassword'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('stFaculty').selectedIndex = 0;
+            loadStaffList();
+            loadStats();
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteStaff(staffId) {
+        if (!confirm(`Remove staff member ${staffId}?`)) return;
+        try {
+            await api('admin-staff', 'DELETE', { staffId });
+            loadStaffList();
+        } catch (e) { alert(e.message); }
+    }
+
+    function gradeClass(grade) {
+        if (!grade) return '';
+        if (grade.startsWith('A')) return 'grade-a';
+        if (grade.startsWith('B')) return 'grade-b';
+        if (grade.startsWith('C')) return 'grade-c';
+        return 'grade-d';
+    }
+</script>
+</body>
+</html>
