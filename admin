@@ -1,0 +1,79 @@
+// netlify/functions/admin-staff.js
+// Admin only — create, list, delete staff members
+
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { sql, initDB, CORS_HEADERS } = require('./_db');
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+function verifyAdmin(event) {
+    const auth = event.headers.authorization || event.headers.Authorization;
+    if (!auth?.startsWith('Bearer ')) return null;
+    try {
+        const decoded = jwt.verify(auth.slice(7), JWT_SECRET);
+        return decoded.role === 'admin' ? decoded : null;
+    } catch { return null; }
+}
+
+exports.handler = async (event) => {
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers: CORS_HEADERS, body: '' };
+    }
+
+    const admin = verifyAdmin(event);
+    if (!admin) {
+        return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Unauthorized. Admin access required.' }) };
+    }
+
+    await initDB();
+    const method = event.httpMethod;
+
+    try {
+        // GET — list all staff
+        if (method === 'GET') {
+            const staff = await sql`
+                SELECT id, staff_id, name, email, faculty, role, created_at
+                FROM staff WHERE role = 'staff'
+                ORDER BY created_at DESC
+            `;
+            return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ staff }) };
+        }
+
+        // POST — create staff member
+        if (method === 'POST') {
+            const { staffId, name, email, password, faculty } = JSON.parse(event.body);
+
+            if (!staffId || !name || !email || !password || !faculty) {
+                return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ message: 'All fields including faculty are required.' }) };
+            }
+
+            const [existing] = await sql`SELECT id FROM staff WHERE staff_id = ${staffId} OR email = ${email}`;
+            if (existing) {
+                return { statusCode: 409, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Staff ID or email already exists.' }) };
+            }
+
+            const hashed = await bcrypt.hash(password, 10);
+            const [staff] = await sql`
+                INSERT INTO staff (staff_id, name, email, password, faculty, role)
+                VALUES (${staffId}, ${name}, ${email}, ${hashed}, ${faculty}, 'staff')
+                RETURNING id, staff_id, name, email, faculty, role
+            `;
+
+            return { statusCode: 201, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Staff member created.', staff }) };
+        }
+
+        // DELETE — remove staff
+        if (method === 'DELETE') {
+            const { staffId } = JSON.parse(event.body);
+            await sql`DELETE FROM staff WHERE staff_id = ${staffId} AND role = 'staff'`;
+            return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Staff member removed.' }) };
+        }
+
+        return { statusCode: 405, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Method not allowed.' }) };
+
+    } catch (err) {
+        console.error('Admin staff error:', err);
+        return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ message: 'Server error.' }) };
+    }
+};
