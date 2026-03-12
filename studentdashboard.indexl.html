@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Al Hikma University - Student Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; }
+    nav {
+      background: #1a3a5c;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav h1 { color: #c9a84c; font-size: 1.2rem; }
+    .user-info { color: #dde6f0; font-size: 0.9rem; }
+    .btn-logout {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 7px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .btn-logout:hover { background: #c9a84c; color: #1a3a5c; }
+    .content { padding: 30px; max-width: 900px; margin: 0 auto; }
+    .welcome-card {
+      background: #1a3a5c;
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+    }
+    .welcome-card h2 { color: #c9a84c; font-size: 1.5rem; margin-bottom: 5px; }
+    .welcome-card p { color: #aab8c8; }
+    .results-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+    }
+    .results-card h3 { color: #1a3a5c; margin-bottom: 20px; font-size: 1.1rem; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1a3a5c; color: white; padding: 12px; text-align: left; font-size: 0.9rem; }
+    td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+    tr:hover td { background: #f8f5ef; }
+    .grade-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .no-results { text-align: center; color: #999; padding: 40px; }
+    .loading { text-align: center; color: #999; padding: 30px; }
+  </style>
+</head>
+<body>
+<nav>
+  <h1>🎓 Al Hikma University — Student Portal</h1>
+  <div style="display:flex;align-items:center;gap:15px;">
+    <span class="user-info" id="userInfo"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="content">
+  <div class="welcome-card">
+    <h2 id="welcomeName">Welcome!</h2>
+    <p id="welcomeDetails">Loading your profile...</p>
+  </div>
+  <div class="results-card">
+    <h3>📋 Your Academic Results</h3>
+    <table>
+      <thead>
+        <tr><th>Subject</th><th>Grade</th><th>Semester</th><th>Faculty</th></tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="4" class="loading">Loading results...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'login.html';
+
+async function loadResults() {
+  try {
+    const res = await fetch('/.netlify/functions/results', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (!res.ok) { logout(); return; }
+
+    document.getElementById('welcomeName').textContent = `Welcome, ${data.student.name}`;
+    document.getElementById('welcomeDetails').textContent =
+      `Student ID: ${data.student.student_id} | Faculty: ${data.student.faculty}`;
+    document.getElementById('userInfo').textContent = data.student.name;
+
+    const tbody = document.getElementById('resultsBody');
+    if (data.results && data.results.length) {
+      tbody.innerHTML = data.results.map(r => `
+        <tr>
+          <td>${r.subject}</td>
+          <td><span class="grade-badge">${r.grade}</span></td>
+          <td>${r.semester}</td>
+          <td>${r.faculty}</td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = '<tr><td colspan="4" class="no-results">No results posted yet. Check back later.</td></tr>';
+    }
+  } catch (e) {
+    document.getElementById('resultsBody').innerHTML =
+      '<tr><td colspan="4" class="no-results">Error loading results. Please refresh.</td></tr>';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userRole');
+  window.location.href = 'login.html';
+}
+
+loadResults();
+</script>
+</body>
+</html>
